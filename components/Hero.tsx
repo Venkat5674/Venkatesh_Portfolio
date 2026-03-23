@@ -2,8 +2,8 @@
 
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'motion/react';
 import Image from 'next/image';
-import { ArrowRight, Github, Linkedin, Mail, MousePointer2, Sparkles, Globe, Cpu, Zap } from 'lucide-react';
-import { useRef, useEffect } from 'react';
+import { ArrowRight, Github, Linkedin, Mail, Sparkles, Globe, Cpu, Zap } from 'lucide-react';
+import { useRef, useEffect, useState, memo } from 'react';
 
 // Animation variants for staggered text reveal
 const containerVariants = {
@@ -26,23 +26,21 @@ const letterVariants = {
   },
 };
 
-export default function Hero() {
+const Hero = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   
   // Parallax effects
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
-  const scale = useTransform(scrollY, [0, 300], [1, 0.95]);
+  const opacity = useTransform(scrollY, [0, 400], [1, 0]);
+  const scale = useTransform(scrollY, [0, 400], [1, 0.9]);
+  const y = useTransform(scrollY, [0, 400], [0, 100]);
   
-  // Mouse movement for 3D tilt and background reaction
+  // Mouse movement for 3D tilt
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const rotateX = useSpring(useTransform(mouseY, [-500, 500], [15, -15]), { damping: 25, stiffness: 120 });
-  const rotateY = useSpring(useTransform(mouseX, [-500, 500], [-15, 15]), { damping: 25, stiffness: 120 });
-
-  const bgX = useSpring(useTransform(mouseX, [-500, 500], [-30, 30]), { damping: 40, stiffness: 100 });
-  const bgY = useSpring(useTransform(mouseY, [-500, 500], [-30, 30]), { damping: 40, stiffness: 100 });
+  const rotateX = useSpring(useTransform(mouseY, [-500, 500], [10, -10]), { damping: 30, stiffness: 100 });
+  const rotateY = useSpring(useTransform(mouseX, [-500, 500], [-10, 10]), { damping: 30, stiffness: 100 });
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -56,270 +54,208 @@ export default function Hero() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [mouseX, mouseY]);
 
-  const name1 = "Venkatesh";
-  const name2 = "Pamudurti";
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const fullName = "VENKATESH PAMUDURTI";
+
+  const bgOpacity = useTransform(scrollY, [0, 500], [0.4, 0]);
+  
+  if (!isMounted) return <div className="min-h-screen bg-[#050505]" />;
 
   return (
     <section 
       ref={containerRef}
-      className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#050505] pt-20"
+      className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#050505]"
       id="home"
     >
       {/* Immersive Background (Recipe 7) */}
       <div className="absolute inset-0 z-0">
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#1a1a1a_0%,#050505_100%)]" />
+        
         <motion.div 
-          style={{ x: bgX, y: bgY }}
-          className="absolute inset-0 opacity-40"
+          style={{ opacity: bgOpacity }}
+          className="absolute inset-0"
         >
-          <div className="absolute top-[5%] left-[10%] w-[50vw] h-[50vw] bg-neon-blue/15 blur-[150px] rounded-full animate-pulse" />
-          <div className="absolute bottom-[5%] right-[10%] w-[45vw] h-[45vw] bg-neon-purple/15 blur-[150px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-neon-blue/10 blur-[120px] rounded-full animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-neon-purple/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
         </motion.div>
         
-        {/* Animated Grid Overlay (Recipe 1) */}
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30 brightness-50 contrast-150" />
-        <motion.div 
-          style={{ x: useTransform(mouseX, [-500, 500], [5, -5]), y: useTransform(mouseY, [-500, 500], [5, -5]) }}
-          className="absolute inset-0 bg-grid-white/[0.03] bg-[size:60px_60px]" 
-        />
+        {/* Subtle Grid (Recipe 1) */}
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
         
-        {/* Scanning Line Effect */}
-        <motion.div 
-          animate={{ y: ["0%", "100%", "0%"] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-neon-blue/20 to-transparent z-10 pointer-events-none"
-        />
-
-        {/* Floating Particles */}
-        {[...Array(12)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-[1px] h-[1px] bg-white rounded-full"
-            initial={{ 
-              x: Math.random() * 100 + "%", 
-              y: Math.random() * 100 + "%",
-              opacity: Math.random() * 0.5 + 0.1
-            }}
-            animate={{ 
-              y: [null, "-40px", "0px"],
-              opacity: [0.1, 0.4, 0.1],
-              scale: [1, 1.5, 1]
-            }}
-            transition={{ 
-              duration: Math.random() * 5 + 3, 
-              repeat: Infinity, 
-              ease: "easeInOut" 
-            }}
-          />
-        ))}
+        {/* Noise Texture */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] pointer-events-none" />
       </div>
 
-      <div className="container mx-auto px-6 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-        
-        {/* Left Content: Editorial Typography (Recipe 2) */}
-        <motion.div 
-          style={{ opacity, scale }}
-          className="lg:col-span-7 space-y-10"
-        >
-          <div className="space-y-6">
+      <div className="container mx-auto px-6 relative z-10 pt-20 lg:pt-0">
+        <div className="flex flex-col space-y-12 lg:space-y-16">
+          
+          {/* Top Section: Name & Badges */}
+          <motion.div 
+            style={{ opacity, scale, y }}
+            className="space-y-8"
+          >
             <motion.div 
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="flex items-center space-x-4"
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-center space-x-6"
             >
-              <div className="flex -space-x-3">
+              <div className="flex -space-x-4">
                 {[Globe, Cpu, Zap].map((Icon, i) => (
-                  <motion.div 
+                  <div 
                     key={i}
-                    whileHover={{ y: -5, scale: 1.1 }}
-                    className="w-10 h-10 rounded-full border border-white/20 bg-black/40 flex items-center justify-center backdrop-blur-md shadow-xl"
+                    className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border border-white/10 bg-white/5 flex items-center justify-center backdrop-blur-xl shadow-2xl"
                   >
                     <Icon size={16} className={i === 0 ? "text-neon-blue" : i === 1 ? "text-neon-purple" : "text-yellow-400"} />
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-              <div className="h-[1px] w-12 bg-white/20" />
-              <span className="text-[11px] font-black tracking-[0.5em] uppercase text-gray-500 font-mono">
-                System.Initialize(Future)
+              <div className="h-[1px] w-12 lg:w-16 bg-gradient-to-r from-white/20 to-transparent" />
+              <span className="text-[8px] lg:text-[10px] font-black tracking-[0.6em] uppercase text-gray-500 font-mono">
+                EST. 2026 // ARCHITECT
               </span>
             </motion.div>
             
-            <h1 className="text-[15vw] lg:text-[9vw] font-black leading-[0.75] tracking-tighter text-white uppercase font-display">
+            <h1 className="text-[8vw] sm:text-[9vw] lg:text-[8.5vw] font-black leading-none tracking-tighter text-white uppercase font-display whitespace-nowrap overflow-hidden">
               <motion.div 
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="flex flex-wrap"
+                className="flex"
               >
-                {name1.split("").map((char, i) => (
-                  <motion.span key={i} variants={letterVariants} className="inline-block hover:text-neon-blue transition-colors duration-300">
-                    {char}
-                  </motion.span>
-                ))}
-              </motion.div>
-              <motion.div 
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="flex flex-wrap text-transparent bg-clip-text bg-gradient-to-r from-neon-blue via-white to-neon-purple"
-              >
-                {name2.split("").map((char, i) => (
-                  <motion.span key={i} variants={letterVariants} className="inline-block hover:scale-110 transition-transform duration-300">
-                    {char}
+                {fullName.split("").map((char, i) => (
+                  <motion.span 
+                    key={i} 
+                    variants={letterVariants} 
+                    className={`inline-block hover:text-neon-blue transition-colors duration-500 ${char === " " ? "w-[0.2em]" : ""}`}
+                  >
+                    {char === " " ? "\u00A0" : char}
                   </motion.span>
                 ))}
               </motion.div>
             </h1>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1 }}
-            className="space-y-6"
-          >
-            <p className="text-xl lg:text-3xl text-gray-400 max-w-2xl leading-tight font-light font-outfit">
-              Crafting <span className="text-white font-bold italic tracking-tight">Digital Masterpieces</span> through the synergy of <span className="text-neon-blue font-medium">Full Stack Architecture</span> and <span className="text-neon-purple font-medium">Artificial Intelligence</span>.
-            </p>
-            
-            <div className="flex items-center gap-4 text-xs font-mono text-gray-600 uppercase tracking-widest">
-              <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-neon-blue animate-pulse" /> Next.js 15</span>
-              <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-neon-purple animate-pulse" /> TypeScript</span>
-              <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" /> AI Integration</span>
-            </div>
           </motion.div>
 
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.2 }}
-            className="flex flex-wrap gap-8 items-center"
-          >
-            <button className="group relative px-12 py-6 bg-white text-black font-black rounded-[2rem] overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_20px_40px_rgba(255,255,255,0.1)]">
-              <span className="relative z-10 flex items-center gap-4 uppercase tracking-[0.2em] text-[10px]">
-                Explore Work <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-neon-blue to-neon-purple opacity-0 group-hover:opacity-100 transition-opacity" />
-            </button>
+          {/* Bottom Section: Grid for Bio and Image */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
             
-            <div className="flex items-center space-x-8">
-              {[
-                { icon: Github, href: "https://github.com", label: "Github" },
-                { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-                { icon: Mail, href: "mailto:vpamudurti@gmail.com", label: "Email" }
-              ].map((social, i) => (
-                <motion.a
-                  key={i}
-                  href={social.href}
-                  whileHover={{ y: -10 }}
-                  className="flex flex-col items-center gap-2 group"
-                >
-                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10 group-hover:border-neon-blue/50 group-hover:bg-neon-blue/10 transition-all duration-300">
-                    <social.icon size={22} className="text-gray-400 group-hover:text-neon-blue transition-colors" />
-                  </div>
-                  <span className="text-[8px] uppercase tracking-widest text-gray-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">{social.label}</span>
-                </motion.a>
-              ))}
-            </div>
-          </motion.div>
-        </motion.div>
-
-        {/* Right Content: Futuristic Hero Image with 3D Tilt */}
-        <div className="lg:col-span-5 relative perspective-2000">
-          <motion.div
-            style={{ rotateX, rotateY }}
-            initial={{ opacity: 0, scale: 0.8, rotateY: 20 }}
-            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] as const }}
-            className="relative aspect-[4/5] w-full max-w-[520px] mx-auto"
-          >
-            {/* Image Container */}
-            <div className="relative w-full h-full rounded-[80px] overflow-hidden border border-white/10 group shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
-              <Image
-                src="https://picsum.photos/seed/venkatesh-portfolio/1000/1250"
-                alt="Venkatesh Pamudurti"
-                fill
-                className="object-cover transition-transform duration-1000 group-hover:scale-105 grayscale-[0.5] group-hover:grayscale-0"
-                referrerPolicy="no-referrer"
-                priority
-              />
+            {/* Left: Bio & Actions */}
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-7 space-y-10"
+            >
+              <p className="text-lg lg:text-3xl text-gray-400 max-w-3xl leading-tight font-light font-outfit">
+                Engineering <span className="text-white font-bold italic">Digital Frontiers</span> with <span className="text-neon-blue font-medium">Full Stack Precision</span> and <span className="text-neon-purple font-medium">Neural Intelligence</span>.
+              </p>
               
-              {/* Dynamic Overlays */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-90" />
-              <div className="absolute inset-0 bg-neon-blue/5 mix-blend-overlay" />
-              
-              {/* Floating Glass Stats (Recipe 3) */}
-              <motion.div 
-                animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-16 -right-10 glass p-6 rounded-[2.5rem] border border-white/20 shadow-2xl z-20 backdrop-blur-3xl"
-              >
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 flex items-center justify-center animate-pulse">
-                    <Sparkles className="text-neon-blue" size={28} />
-                  </div>
-                  <div>
-                    <p className="text-[9px] uppercase tracking-[0.3em] text-gray-500 font-black mb-1">Expertise</p>
-                    <p className="text-xl font-black text-white font-display">Full Stack</p>
-                  </div>
-                </div>
-              </motion.div>
+              <div className="flex flex-wrap items-center gap-6 text-[9px] font-mono text-gray-600 uppercase tracking-[0.3em]">
+                <span className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-neon-blue shadow-[0_0_10px_rgba(0,243,255,0.5)]" /> Next.js 15</span>
+                <span className="w-1 h-1 rounded-full bg-white/10" />
+                <span className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-neon-purple shadow-[0_0_10px_rgba(189,0,255,0.5)]" /> TypeScript</span>
+                <span className="w-1 h-1 rounded-full bg-white/10" />
+                <span className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]" /> AI Systems</span>
+              </div>
 
-              {/* Bottom Interactive Panel */}
-              <div className="absolute bottom-12 left-12 right-12 glass p-8 rounded-[3rem] border border-white/20 backdrop-blur-3xl overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-neon-blue/50 to-transparent" />
-                <div className="flex justify-between items-center">
-                  <div className="space-y-2">
-                    <p className="text-[9px] uppercase tracking-[0.4em] text-neon-blue font-black">Current Status</p>
-                    <p className="text-base font-bold text-white flex items-center gap-3">
-                      <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                      </span>
-                      Available for Hire
-                    </p>
-                  </div>
-                  <motion.div 
-                    whileHover={{ rotate: 90 }}
-                    className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10"
-                  >
-                    <MousePointer2 className="text-white/60" size={20} />
-                  </motion.div>
+              <div className="flex flex-wrap gap-8 items-center pt-4">
+                <button className="group relative px-10 py-5 lg:px-14 lg:py-7 bg-white text-black font-black rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_30px_60px_rgba(255,255,255,0.1)]">
+                  <span className="relative z-10 flex items-center gap-4 uppercase tracking-[0.3em] text-[10px] lg:text-[11px]">
+                    View Projects <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-neon-blue to-neon-purple opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+                
+                <div className="flex items-center space-x-8 lg:space-x-10">
+                  {[
+                    { icon: Github, href: "https://github.com", label: "Github" },
+                    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
+                    { icon: Mail, href: "mailto:vpamudurti@gmail.com", label: "Email" }
+                  ].map((social, i) => (
+                    <motion.a
+                      key={i}
+                      href={social.href}
+                      whileHover={{ y: -8 }}
+                      className="flex flex-col items-center gap-3 group"
+                    >
+                      <div className="p-3 lg:p-4 rounded-2xl bg-white/5 border border-white/10 group-hover:border-neon-blue/50 group-hover:bg-neon-blue/5 transition-all duration-500">
+                        <social.icon size={20} className="text-gray-500 group-hover:text-neon-blue transition-colors" />
+                      </div>
+                      <span className="text-[8px] uppercase tracking-[0.2em] text-gray-700 font-bold opacity-0 group-hover:opacity-100 transition-opacity">{social.label}</span>
+                    </motion.a>
+                  ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Decorative Cyberpunk Elements */}
-            <div className="absolute -top-16 -left-16 w-48 h-48 border-t-[6px] border-l-[6px] border-neon-blue/30 rounded-tl-[100px] pointer-events-none" />
-            <div className="absolute -bottom-16 -right-16 w-48 h-48 border-b-[6px] border-r-[6px] border-neon-purple/30 rounded-br-[100px] pointer-events-none" />
-            
-            {/* Tech Labels */}
-            <div className="absolute top-1/4 -left-20 vertical-text text-[10px] font-mono text-white/20 tracking-[1em] uppercase pointer-events-none">
-              Architecture // 2026
+            {/* Right: Image */}
+            <div className="lg:col-span-5 relative perspective-2000">
+              <motion.div
+                style={{ rotateX, rotateY }}
+                initial={{ opacity: 0, scale: 0.9, rotateY: 15 }}
+                animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}
+                className="relative aspect-[4/5] w-full max-w-[400px] lg:ml-auto"
+              >
+                {/* Image Container */}
+                <div className="relative w-full h-full rounded-[40px] lg:rounded-[60px] overflow-hidden border border-white/10 group shadow-[0_60px_120px_rgba(0,0,0,0.6)]">
+                  <Image
+                    src="https://picsum.photos/seed/venkatesh-portfolio/1000/1250"
+                    alt="Venkatesh Pamudurti"
+                    fill
+                    className="object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[0.4] group-hover:grayscale-0"
+                    referrerPolicy="no-referrer"
+                    priority
+                  />
+                  
+                  {/* Overlays */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-0 bg-neon-blue/5 mix-blend-overlay" />
+                </div>
+
+                {/* Floating Stats */}
+                <motion.div 
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute -top-6 -right-6 glass p-4 lg:p-6 rounded-[1.5rem] lg:rounded-[2rem] border border-white/20 shadow-2xl z-20 backdrop-blur-2xl"
+                >
+                  <div className="flex items-center gap-3 lg:gap-4">
+                    <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-neon-blue/20 flex items-center justify-center animate-pulse">
+                      <Sparkles className="text-neon-blue" size={24} />
+                    </div>
+                    <div>
+                      <p className="text-[7px] lg:text-[8px] uppercase tracking-[0.3em] text-gray-500 font-black">Expertise</p>
+                      <p className="text-sm lg:text-lg font-black text-white font-display">Full Stack</p>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
             </div>
-            <div className="absolute bottom-1/4 -right-20 vertical-text text-[10px] font-mono text-white/20 tracking-[1em] uppercase pointer-events-none rotate-180">
-              Innovation // AI
-            </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
-      {/* Scroll Indicator (Recipe 3) */}
+      {/* Scroll Indicator */}
       <motion.div 
         style={{ opacity }}
-        className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-6"
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
       >
-        <span className="text-[9px] uppercase tracking-[0.6em] text-gray-600 font-black">Scroll to Begin</span>
-        <div className="relative w-[2px] h-24 bg-white/5 rounded-full overflow-hidden">
+        <span className="text-[8px] uppercase tracking-[0.8em] text-gray-700 font-black">Initiate Scroll</span>
+        <div className="w-[1px] h-16 bg-white/5 relative overflow-hidden">
           <motion.div 
             animate={{ y: ["-100%", "100%"] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-transparent via-neon-blue to-transparent" 
+            transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 bg-gradient-to-b from-transparent via-neon-blue to-transparent" 
           />
         </div>
       </motion.div>
     </section>
   );
-}
+};
+
+export default memo(Hero);

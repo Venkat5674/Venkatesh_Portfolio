@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { Github, ArrowRight } from 'lucide-react';
+import { useState, useEffect, memo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Github, ArrowRight, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import ScrollStack, { ScrollStackItem } from './ScrollStack';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 
@@ -20,18 +18,20 @@ interface Project {
   github?: string;
   live?: string;
   order?: number;
+  category?: string;
 }
 
-export default function Projects() {
+const Projects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('All');
   const router = useRouter();
 
   useEffect(() => {
     const q = query(
       collection(db, 'projects'),
       orderBy('order', 'asc'),
-      limit(5)
+      limit(6)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const projectsData = snapshot.docs.map(doc => ({
@@ -45,145 +45,157 @@ export default function Projects() {
     return () => unsubscribe();
   }, []);
 
+  const categories = ['All', ...Array.from(new Set(projects.map(p => p.category || 'Development')))];
+  const filteredProjects = filter === 'All' ? projects : projects.filter(p => (p.category || 'Development') === filter);
+
   if (loading) {
     return (
-      <section id="projects" className="relative bg-[#050505] min-h-screen flex items-center justify-center">
-        <div className="text-neon-blue animate-pulse text-2xl font-mono uppercase tracking-[0.5em]">Initializing Projects...</div>
+      <section id="projects" className="py-40 bg-[#050505] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-8">
+          <div className="w-20 h-20 border-t-2 border-neon-blue rounded-full animate-spin" />
+          <div className="text-neon-blue text-xs font-black uppercase tracking-[0.5em] animate-pulse">Synchronizing Portfolio...</div>
+        </div>
       </section>
     );
   }
 
-  if (projects.length === 0) return null;
-
   return (
-    <section id="projects" className="relative bg-[#050505] min-h-screen pb-32 overflow-hidden">
+    <section id="projects" className="py-40 px-6 bg-[#050505] relative overflow-hidden">
       {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20">
+      <div className="absolute inset-0 pointer-events-none opacity-20">
         <div className="absolute top-1/2 left-0 w-[800px] h-[800px] bg-neon-blue/5 blur-[200px] rounded-full -translate-x-1/2" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-neon-purple/5 blur-[180px] rounded-full translate-x-1/2" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-32 pb-24 relative z-10">
+      <div className="max-w-7xl mx-auto relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           viewport={{ once: true }}
-          className="text-center"
+          className="text-center mb-32"
         >
-          <div className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.4em] text-neon-blue mb-6">
-            Portfolio
+          <div className="inline-block px-5 py-2 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-[0.5em] text-neon-blue mb-8">
+            Selected Works
           </div>
-          <h2 className="text-5xl md:text-8xl font-black mb-8 text-white tracking-tighter uppercase font-display">
-            Selected <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple">Works</span>
+          <h2 className="text-6xl md:text-9xl font-black mb-10 text-white tracking-tighter uppercase font-display leading-none">
+            Digital <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple">Showcase</span>
           </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto font-outfit font-light">
-            A curated collection of digital experiences, blending technical excellence with creative vision.
-          </p>
-        </motion.div>
-      </div>
-
-      <div className="relative z-10">
-        <ScrollStack 
-          itemDistance={50} 
-          itemStackDistance={40} 
-          stackPosition="15%" 
-          baseScale={0.9}
-          useWindowScroll={true}
-        >
-          {projects.map((project, i) => (
-            <ScrollStackItem key={project.id} itemClassName="glass border border-white/10 overflow-hidden !p-0 mb-12 rounded-[3rem] shadow-2xl">
-              <div 
-                onClick={() => router.push(`/projects/${project.id}`)}
-                className="block group/card cursor-pointer"
+          
+          {/* Filter Tabs */}
+          <div className="flex flex-wrap justify-center gap-6 mt-16">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setFilter(cat)}
+                className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.3em] transition-all duration-500 border ${
+                  filter === cat 
+                    ? 'bg-white text-black border-white shadow-[0_10px_30px_rgba(255,255,255,0.2)]' 
+                    : 'bg-white/5 text-gray-500 border-white/10 hover:border-neon-blue hover:text-white'
+                }`}
               >
-                <div className="flex flex-col md:flex-row h-full min-h-[500px]">
-                  <div className="w-full md:w-1/2 p-10 md:p-16 flex flex-col justify-between bg-black/40 backdrop-blur-3xl">
-                    <div>
-                      <div className="flex items-center space-x-4 mb-8">
-                        <span className="text-[10px] font-black font-mono text-neon-blue uppercase tracking-[0.3em]">Featured 0{i + 1}</span>
-                        <div className="h-px w-12 bg-neon-blue/30" />
-                      </div>
-                      <h3 className="text-4xl md:text-6xl font-black text-white mb-8 group-hover/card:text-neon-blue transition-colors uppercase tracking-tight font-display">
-                        {project.title}
-                      </h3>
-                      <p className="text-gray-400 text-lg leading-relaxed mb-10 font-outfit font-light">
-                        {project.shortDescription}
-                      </p>
-                      <div className="flex flex-wrap gap-3 mb-10">
-                        {project.tags.map((tag) => (
-                          <span key={tag} className="px-5 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-300 font-mono">
+                {cat}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div 
+          layout
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredProjects.map((project, i) => (
+              <motion.div
+                key={project.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ duration: 0.8, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                className="group relative"
+              >
+                <div 
+                  onClick={() => router.push(`/projects/${project.id}`)}
+                  className="relative aspect-[4/3] rounded-[4rem] overflow-hidden border border-white/10 bg-white/5 cursor-pointer group-hover:border-neon-blue/30 transition-all duration-700"
+                >
+                  <Image
+                    src={project.images[0] || 'https://picsum.photos/seed/placeholder/800/600'}
+                    alt={project.title}
+                    fill
+                    className="object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[0.5] group-hover:grayscale-0"
+                    referrerPolicy="no-referrer"
+                  />
+                  
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 flex flex-col justify-end p-12">
+                    <div className="space-y-6 translate-y-10 group-hover:translate-y-0 transition-transform duration-700">
+                      <div className="flex flex-wrap gap-3">
+                        {project.tags.slice(0, 3).map(tag => (
+                          <span key={tag} className="px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/10 rounded-full text-[8px] font-black uppercase tracking-widest text-white">
                             {tag}
                           </span>
                         ))}
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-8" onClick={(e) => e.stopPropagation()}>
-                      {project.github && (
-                        <a 
-                          href={project.github} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="flex items-center space-x-3 text-white hover:text-neon-blue transition-all duration-300 group/link"
-                        >
-                          <Github size={24} className="group-hover/link:scale-110 transition-transform" />
-                          <span className="text-[10px] font-black uppercase tracking-widest font-mono">Source Code</span>
-                        </a>
-                      )}
-                      {project.live && (
-                        <a 
-                          href={project.live} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="px-10 py-4 rounded-2xl bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-neon-blue transition-all duration-500 shadow-xl"
-                        >
-                          Live Demo
-                        </a>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="w-full md:w-1/2 relative h-80 md:h-auto overflow-hidden">
-                    <Image
-                      src={project.images[0] || 'https://picsum.photos/seed/placeholder/800/600'}
-                      alt={project.title}
-                      fill
-                      className="object-cover transition-transform duration-1000 group-hover/card:scale-110"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent md:bg-gradient-to-l" />
-                    
-                    {/* Overlay with arrow on hover */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 bg-black/20 backdrop-blur-[2px]">
-                      <div className="p-6 rounded-full bg-white text-black scale-50 group-hover/card:scale-100 transition-transform duration-500">
-                        <ArrowRight size={32} />
+                      <h3 className="text-3xl font-black text-white uppercase tracking-tight font-display">{project.title}</h3>
+                      <p className="text-gray-400 text-sm line-clamp-2 font-outfit font-light">
+                        {project.shortDescription}
+                      </p>
+                      <div className="flex items-center gap-6 pt-4">
+                        {project.github && (
+                          <a 
+                            href={project.github} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-4 rounded-2xl bg-white/10 border border-white/10 hover:bg-white hover:text-black transition-all duration-500"
+                          >
+                            <Github size={20} />
+                          </a>
+                        )}
+                        {project.live && (
+                          <a 
+                            href={project.live} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-4 rounded-2xl bg-white/10 border border-white/10 hover:bg-white hover:text-black transition-all duration-500"
+                          >
+                            <ExternalLink size={20} />
+                          </a>
+                        )}
+                        <button className="flex-1 py-4 rounded-2xl bg-neon-blue text-black font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-105 transition-transform duration-500">
+                          Case Study <ArrowRight size={16} />
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </ScrollStackItem>
-          ))}
-        </ScrollStack>
-      </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        viewport={{ once: true }}
-        className="flex justify-center mt-24 relative z-10"
-      >
-        <Link 
-          href="/projects" 
-          className="group flex items-center space-x-6 px-12 py-6 bg-white/5 border border-white/10 rounded-3xl text-white font-black hover:bg-white/10 transition-all hover:scale-105 shadow-2xl"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true }}
+          className="flex justify-center mt-32"
         >
-          <span className="text-[10px] uppercase tracking-[0.4em]">View All Projects</span>
-          <div className="p-3 bg-neon-blue rounded-2xl text-black group-hover:translate-x-2 transition-transform shadow-[0_0_20px_rgba(0,243,255,0.4)]">
-            <ArrowRight size={24} />
-          </div>
-        </Link>
-      </motion.div>
+          <button 
+            onClick={() => router.push('/projects')}
+            className="group flex items-center space-x-8 px-14 py-7 bg-white/5 border border-white/10 rounded-[2.5rem] text-white font-black hover:bg-white/10 transition-all hover:scale-105 shadow-2xl"
+          >
+            <span className="text-[10px] uppercase tracking-[0.5em]">Explore Full Archive</span>
+            <div className="p-4 bg-neon-blue rounded-2xl text-black group-hover:translate-x-2 transition-transform shadow-[0_0_30px_rgba(0,243,255,0.4)]">
+              <ArrowRight size={24} />
+            </div>
+          </button>
+        </motion.div>
+      </div>
     </section>
   );
-}
+};
+
+export default memo(Projects);

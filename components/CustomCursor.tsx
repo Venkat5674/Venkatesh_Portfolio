@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, useSpring, useMotionValue } from 'motion/react';
 
 export default function CustomCursor() {
+  const [isMounted, setIsMounted] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
   const mouseX = useMotionValue(0);
@@ -12,8 +13,12 @@ export default function CustomCursor() {
   const springConfig = { damping: 25, stiffness: 150 };
   const cursorX = useSpring(mouseX, springConfig);
   const cursorY = useSpring(mouseY, springConfig);
+  
+  const dotX = useSpring(mouseX, { damping: 15, stiffness: 250 });
+  const dotY = useSpring(mouseY, { damping: 15, stiffness: 250 });
 
   useEffect(() => {
+    setIsMounted(true);
     const handleMouseMove = (e: MouseEvent) => {
       mouseX.set(e.clientX - 16);
       mouseY.set(e.clientY - 16);
@@ -42,6 +47,8 @@ export default function CustomCursor() {
     };
   }, [mouseX, mouseY]);
 
+  if (!isMounted) return null;
+
   return (
     <>
       <motion.div
@@ -57,8 +64,8 @@ export default function CustomCursor() {
       <motion.div
         className="fixed top-0 left-0 w-1.5 h-1.5 bg-neon-blue rounded-full pointer-events-none z-[9999] hidden lg:block shadow-[0_0_10px_#00f3ff]"
         style={{
-          x: useSpring(mouseX, { damping: 15, stiffness: 250 }),
-          y: useSpring(mouseY, { damping: 15, stiffness: 250 }),
+          x: dotX,
+          y: dotY,
           backgroundColor: isHovering ? '#bc13fe' : '#00f3ff',
         }}
       />
