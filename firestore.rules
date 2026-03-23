@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: messages
+    // Fields:
+    //   - name: string (required, 1-100 chars)
+    //   - email: string (required, valid email)
+    //   - message: string (required, 1-1000 chars)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "vpamudurti@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['name', 'email', 'message', 'createdAt']) &&
+             data.keys().hasOnly(['name', 'email', 'message', 'createdAt']) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             isValidEmail(data.email) &&
+             data.message is string && data.message.size() >= 1 && data.message.size() <= 1000 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['title', 'shortDescription', 'fullDescription', 'images', 'tags']) &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.shortDescription is string && data.shortDescription.size() >= 1 && data.shortDescription.size() <= 100 &&
+             data.fullDescription is string && data.fullDescription.size() >= 1 && data.fullDescription.size() <= 5000 &&
+             data.images is list && data.images.size() <= 5 &&
+             data.tags is list &&
+             (!('github' in data) || data.github is string) &&
+             (!('live' in data) || data.live is string) &&
+             (!('order' in data) || data.order is int);
+    }
+
+    function isValidCertification(data) {
+      return data.keys().hasAll(['name', 'issuer', 'date', 'image']) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 200 &&
+             data.issuer is string && data.issuer.size() >= 1 && data.issuer.size() <= 200 &&
+             data.date is string && data.date.size() >= 1 &&
+             data.image is string && data.image.size() >= 1 &&
+             (!('link' in data) || data.link is string) &&
+             (!('techLearned' in data) || data.techLearned is list) &&
+             (!('order' in data) || data.order is int);
+    }
+
+    function isValidBadge(data) {
+      return data.keys().hasAll(['name', 'issuer', 'explanation', 'image', 'link']) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 200 &&
+             data.issuer is string && data.issuer.size() >= 1 && data.issuer.size() <= 200 &&
+             data.explanation is string && data.explanation.size() >= 1 && data.explanation.size() <= 1000 &&
+             data.image is string && data.image.size() >= 1 &&
+             data.link is string && data.link.size() >= 1 &&
+             (!('order' in data) || data.order is int);
+    }
+
+    match /messages/{messageId} {
+      allow create: if isValidMessage(request.resource.data);
+      allow read: if isAdmin();
+    }
+
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if isAdmin() && (request.method == 'delete' || isValidProject(request.resource.data));
+    }
+
+    match /certifications/{certId} {
+      allow read: if true;
+      allow write: if isAdmin() && (request.method == 'delete' || isValidCertification(request.resource.data));
+    }
+
+    match /badges/{badgeId} {
+      allow read: if true;
+      allow write: if isAdmin() && (request.method == 'delete' || isValidBadge(request.resource.data));
+    }
+  }
+}
